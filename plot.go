@@ -157,9 +157,9 @@ func (p *Plot) Draw(c draw.Canvas) {
 	p.Y.sanitizeRange()
 	y := verticalAxis{p.Y}
 
-	ywidth := y.size()
+	ywidth := y.size(c)
 
-	xheight := x.size()
+	xheight := x.size(c)
 	x.draw(padX(p, draw.Crop(c, ywidth, 0, 0, 0)))
 	y.draw(padY(p, draw.Crop(c, 0, 0, xheight, 0)))
 
@@ -183,7 +183,7 @@ func (p *Plot) DataCanvas(da draw.Canvas) draw.Canvas {
 	x := horizontalAxis{p.X}
 	p.Y.sanitizeRange()
 	y := verticalAxis{p.Y}
-	return padY(p, padX(p, draw.Crop(da, y.size(), 0, x.size(), 0)))
+	return padY(p, padX(p, draw.Crop(da, y.size(da), 0, x.size(da), 0)))
 }
 
 // DrawGlyphBoxes draws red outlines around the plot's
@@ -203,7 +203,7 @@ func padX(p *Plot, c draw.Canvas) draw.Canvas {
 	glyphs := p.GlyphBoxes(p)
 	l := leftMost(&c, glyphs)
 	xAxis := horizontalAxis{p.X}
-	glyphs = append(glyphs, xAxis.GlyphBoxes(p)...)
+	glyphs = append(glyphs, xAxis.GlyphBoxes(p, c)...)
 	r := rightMost(&c, glyphs)
 
 	minx := c.Min.X - l.Min.X
@@ -259,7 +259,7 @@ func padY(p *Plot, c draw.Canvas) draw.Canvas {
 	glyphs := p.GlyphBoxes(p)
 	b := bottomMost(&c, glyphs)
 	yAxis := verticalAxis{p.Y}
-	glyphs = append(glyphs, yAxis.GlyphBoxes(p)...)
+	glyphs = append(glyphs, yAxis.GlyphBoxes(p, c)...)
 	t := topMost(&c, glyphs)
 
 	miny := c.Min.Y - b.Min.Y

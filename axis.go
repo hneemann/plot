@@ -20,6 +20,15 @@ type Ticker interface {
 	Ticks(min, max float64) []Tick
 }
 
+// SizeTicker creates Ticks in a specified range
+// The setter is called to give the SizeTicker access to the axis
+type SizeTicker interface {
+	Ticker
+	// SetAxis is called prior to Ticks to give the Ticks method
+	// access to the axis
+	SetAxis(axis Axis, axisLen vg.Length, orientation orientation)
+}
+
 // Normalizer rescales values from the data coordinate system to the
 // normalized coordinate system.
 type Normalizer interface {
@@ -208,6 +217,21 @@ func (a Axis) drawTicks() bool {
 	return a.Tick.Width > 0 && a.Tick.Length > 0
 }
 
+// CreateTicks creates the ticks according to the canvas and the orientation
+func (a Axis) CreateTicks(min, max float64, c draw.Canvas, orientation orientation) []Tick {
+	if needsAxis, ok := a.Tick.Marker.(SizeTicker); ok {
+		var axisLen vg.Length = 0
+		switch orientation {
+		case horizontal:
+			axisLen = c.X(a.Norm(max)) - c.X(a.Norm(min))
+		case vertical:
+			axisLen = c.Y(a.Norm(max)) - c.Y(a.Norm(min))
+		}
+		needsAxis.SetAxis(a, axisLen, orientation)
+	}
+	return a.Tick.Marker.Ticks(min, max)
+}
+
 // A horizontalAxis draws horizontally across the bottom
 // of a plot.
 type horizontalAxis struct {
@@ -215,13 +239,13 @@ type horizontalAxis struct {
 }
 
 // size returns the height of the axis.
-func (a horizontalAxis) size() (h vg.Length) {
+func (a horizontalAxis) size(c draw.Canvas) (h vg.Length) {
 	if a.Label.Text != "" { // We assume that the label isn't rotated.
 		h -= a.Label.Font.Extents().Descent
 		h += a.Label.Height(a.Label.Text)
 	}
 
-	marks := a.Tick.Marker.Ticks(a.Min, a.Max)
+	marks := a.CreateTicks(a.Min, a.Max, c, horizontal)
 	if len(marks) > 0 {
 		if a.drawTicks() {
 			h += a.Tick.Length
@@ -243,7 +267,7 @@ func (a horizontalAxis) draw(c draw.Canvas) {
 		y += a.Label.Height(a.Label.Text)
 	}
 
-	marks := a.Tick.Marker.Ticks(a.Min, a.Max)
+	marks := a.CreateTicks(a.Min, a.Max, c, horizontal)
 	ticklabelheight := tickLabelHeight(a.Tick.Label, marks)
 	for _, t := range marks {
 		x := c.X(a.Norm(t.Value))
@@ -276,9 +300,9 @@ func (a horizontalAxis) draw(c draw.Canvas) {
 }
 
 // GlyphBoxes returns the GlyphBoxes for the tick labels.
-func (a horizontalAxis) GlyphBoxes(*Plot) []GlyphBox {
+func (a horizontalAxis) GlyphBoxes(p *Plot, canvas draw.Canvas) []GlyphBox {
 	var boxes []GlyphBox
-	for _, t := range a.Tick.Marker.Ticks(a.Min, a.Max) {
+	for _, t := range a.CreateTicks(a.Min, a.Max, canvas, horizontal) {
 		if t.IsMinor() {
 			continue
 		}
@@ -297,13 +321,13 @@ type verticalAxis struct {
 }
 
 // size returns the width of the axis.
-func (a verticalAxis) size() (w vg.Length) {
+func (a verticalAxis) size(c draw.Canvas) (w vg.Length) {
 	if a.Label.Text != "" { // We assume that the label isn't rotated.
 		w -= a.Label.Font.Extents().Descent
 		w += a.Label.Height(a.Label.Text)
 	}
 
-	marks := a.Tick.Marker.Ticks(a.Min, a.Max)
+	marks := a.CreateTicks(a.Min, a.Max, c, vertical)
 	if len(marks) > 0 {
 		if lwidth := tickLabelWidth(a.Tick.Label, marks); lwidth > 0 {
 			w += lwidth
@@ -329,7 +353,7 @@ func (a verticalAxis) draw(c draw.Canvas) {
 		c.FillText(sty, vg.Point{X: x, Y: c.Center().Y}, a.Label.Text)
 		x += -a.Label.Font.Extents().Descent
 	}
-	marks := a.Tick.Marker.Ticks(a.Min, a.Max)
+	marks := a.CreateTicks(a.Min, a.Max, c, vertical)
 	if w := tickLabelWidth(a.Tick.Label, marks); len(marks) > 0 && w > 0 {
 		x += w
 	}
@@ -363,9 +387,9 @@ func (a verticalAxis) draw(c draw.Canvas) {
 }
 
 // GlyphBoxes returns the GlyphBoxes for the tick labels
-func (a verticalAxis) GlyphBoxes(*Plot) []GlyphBox {
+func (a verticalAxis) GlyphBoxes(p *Plot, c draw.Canvas) []GlyphBox {
 	var boxes []GlyphBox
-	for _, t := range a.Tick.Marker.Ticks(a.Min, a.Max) {
+	for _, t := range a.CreateTicks(a.Min, a.Max, c, vertical) {
 		if t.IsMinor() {
 			continue
 		}

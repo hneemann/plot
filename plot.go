@@ -288,7 +288,7 @@ func topMost(c *draw.Canvas, boxes []GlyphBox) GlyphBox {
 		if b.Size().Y <= 0 {
 			continue
 		}
-		if y := c.Y(b.Y) + b.Min.Y + b.Size().Y; y > maxy && b.Y <= 1 {
+		if y := c.Y(b.Y) + b.Min.Y + b.Size().Y; y > maxy && b.Y <= 1+slop {
 			maxy = y
 			t = b
 		}
@@ -304,7 +304,7 @@ func bottomMost(c *draw.Canvas, boxes []GlyphBox) GlyphBox {
 		if b.Size().Y <= 0 {
 			continue
 		}
-		if y := c.Y(b.Y) + b.Min.Y; y < miny && b.Y >= 0 {
+		if y := c.Y(b.Y) + b.Min.Y; y < miny && b.Y >= -slop {
 			miny = y
 			l = b
 		}

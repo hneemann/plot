@@ -221,6 +221,9 @@ func padX(p *Plot, c draw.Canvas) draw.Canvas {
 	}
 }
 
+// see draw.Canvas slop
+const slop = 3e-8 // ≈ √1⁻¹⁵
+
 // rightMost returns the right-most GlyphBox.
 func rightMost(c *draw.Canvas, boxes []GlyphBox) GlyphBox {
 	maxx := c.Max.X
@@ -229,7 +232,7 @@ func rightMost(c *draw.Canvas, boxes []GlyphBox) GlyphBox {
 		if b.Size().X <= 0 {
 			continue
 		}
-		if x := c.X(b.X) + b.Min.X + b.Size().X; x > maxx && b.X <= 1 {
+		if x := c.X(b.X) + b.Min.X + b.Size().X; x > maxx && b.X <= 1+slop {
 			maxx = x
 			r = b
 		}
@@ -245,7 +248,7 @@ func leftMost(c *draw.Canvas, boxes []GlyphBox) GlyphBox {
 		if b.Size().X <= 0 {
 			continue
 		}
-		if x := c.X(b.X) + b.Min.X; x < minx && b.X >= 0 {
+		if x := c.X(b.X) + b.Min.X; x < minx && b.X >= -slop {
 			minx = x
 			l = b
 		}

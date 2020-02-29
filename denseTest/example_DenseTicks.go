@@ -16,10 +16,10 @@ func main() {
 	p.Add(plotter.NewGrid())
 	p.Add(testData())
 
-	err = p.Save(800, 600, "denseTicks.png")
-	if err != nil {
-		panic(err)
-	}
+	_ = p.Save(100, 75, "denseTicks0.png")
+	_ = p.Save(200, 150, "denseTicks1.png")
+	_ = p.Save(400, 300, "denseTicks2.png")
+	_ = p.Save(800, 600, "denseTicks3.png")
 }
 
 func testData() (plot.Plotter, plot.Plotter) {
